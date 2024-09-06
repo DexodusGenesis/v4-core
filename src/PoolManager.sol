@@ -392,4 +392,13 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
     function _isUnlocked() internal view override returns (bool) {
         return Lock.isUnlocked();
     }
+
+    // new functions to get pool state from external contracts (created by myself) !!!!!!
+    function getPool_sqrtPriceX96(PoolId id) public view returns (uint160) {
+        return _pools[id].slot0.sqrtPriceX96();
+    }
+    function getPool_tick(PoolId id) public view returns (int24) {
+        return _pools[id].slot0.tick();
+    }
+
 }
