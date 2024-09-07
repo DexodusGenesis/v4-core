@@ -22,6 +22,12 @@ library Position {
         // fee growth per unit of liquidity as of the last update to liquidity or fees owed
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
+
+        uint256 lossGrowthInside0LastX128;
+        uint256 lossGrowthInside1LastX128;
+
+        uint256 gainGrowthInside0LastX128;
+        uint256 gainGrowthInside1LastX128;
     }
 
     /// @notice Returns the State struct of a position, given an owner and position boundaries

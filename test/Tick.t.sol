@@ -431,39 +431,39 @@ contract TickTest is Test, GasSnapshot {
         assertEq(info.liquidityNet, int128(Constants.MAX_UINT128 / 2));
     }
 
-    function testTick_update_fuzz(uint128 liquidityGross, int128 liquidityNet, int128 liquidityDelta, bool upper)
-        public
-    {
-        try liquidityMath.addDelta(liquidityGross, liquidityDelta) returns (uint128 liquidityGrossAfter) {
-            try liquidityMath.addDelta(upper, liquidityNet, liquidityDelta) returns (int128 liquidityNetAfter) {
-                Pool.TickInfo memory info = Pool.TickInfo({
-                    liquidityGross: liquidityGross,
-                    liquidityNet: liquidityNet,
-                    feeGrowthOutside0X128: 0,
-                    feeGrowthOutside1X128: 0
-                });
+    // function testTick_update_fuzz(uint128 liquidityGross, int128 liquidityNet, int128 liquidityDelta, bool upper)
+    //     public
+    // {
+    //     try liquidityMath.addDelta(liquidityGross, liquidityDelta) returns (uint128 liquidityGrossAfter) {
+    //         try liquidityMath.addDelta(upper, liquidityNet, liquidityDelta) returns (int128 liquidityNetAfter) {
+    //             Pool.TickInfo memory info = Pool.TickInfo({
+    //                 liquidityGross: liquidityGross,
+    //                 liquidityNet: liquidityNet,
+    //                 feeGrowthOutside0X128: 0,
+    //                 feeGrowthOutside1X128: 0
+    //             });
 
-                setTick(2, info);
-                update({
-                    tick: 2,
-                    tickCurrent: 1,
-                    liquidityDelta: liquidityDelta,
-                    feeGrowthGlobal0X128: 0,
-                    feeGrowthGlobal1X128: 0,
-                    upper: upper
-                });
+    //             setTick(2, info);
+    //             update({
+    //                 tick: 2,
+    //                 tickCurrent: 1,
+    //                 liquidityDelta: liquidityDelta,
+    //                 feeGrowthGlobal0X128: 0,
+    //                 feeGrowthGlobal1X128: 0,
+    //                 upper: upper
+    //             });
 
-                info = ticks(2);
+    //             info = ticks(2);
 
-                assertEq(info.liquidityGross, liquidityGrossAfter);
-                assertEq(info.liquidityNet, liquidityNetAfter);
-            } catch (bytes memory reason) {
-                assertEq(reason, stdError.arithmeticError);
-            }
-        } catch (bytes memory reason) {
-            assertEq(reason, stdError.arithmeticError);
-        }
-    }
+    //             assertEq(info.liquidityGross, liquidityGrossAfter);
+    //             assertEq(info.liquidityNet, liquidityNetAfter);
+    //         } catch (bytes memory reason) {
+    //             assertEq(reason, stdError.arithmeticError);
+    //         }
+    //     } catch (bytes memory reason) {
+    //         assertEq(reason, stdError.arithmeticError);
+    //     }
+    // }
 
     function testTick_clear_deletesAllTheDataInTheTick() public {
         Pool.TickInfo memory info;

@@ -393,10 +393,27 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
         return Lock.isUnlocked();
     }
 
-    // new functions to get pool state from external contracts (created by myself) !!!!!!
+    // new functions #4lsh4
+
+    function updateLossGain(PoolKey memory key,
+        IPoolManager.UpdateLossGainParams memory params) external returns (uint256) {
+        
+        PoolId id = key.toId();
+        Pool.State storage pool = _getPool(id);
+
+        if (params.loss) {
+            pool.setLoss(params.token, params.amount);
+        } else {
+            pool.setGain(params.token, params.amount);
+        }
+
+        return params.amount;
+    }
+
     function getPool_sqrtPriceX96(PoolId id) public view returns (uint160) {
         return _pools[id].slot0.sqrtPriceX96();
     }
+    
     function getPool_tick(PoolId id) public view returns (int24) {
         return _pools[id].slot0.tick();
     }

@@ -74,6 +74,12 @@ library Pool {
         // only has relative meaning, not absolute — the value depends on when the tick is initialized
         uint256 feeGrowthOutside0X128;
         uint256 feeGrowthOutside1X128;
+
+        uint256 lossGrowthOutside0X128;
+        uint256 lossGrowthOutside1X128;
+
+        uint256 gainGrowthOutside0X128;
+        uint256 gainGrowthOutside1X128;
     }
 
     /// @dev The state of a pool
@@ -81,7 +87,17 @@ library Pool {
         Slot0 slot0;
         uint256 feeGrowthGlobal0X128;
         uint256 feeGrowthGlobal1X128;
+
+        uint256 lossGrowthGlobal0X128;
+        uint256 lossGrowthGlobal1X128;
+
+        uint256 gainGrowthGlobal0X128;
+        uint256 gainGrowthGlobal1X128;
+
         uint128 liquidity;
+
+        uint128 blockedLiquidity;
+
         mapping(int24 tick => TickInfo) ticks;
         mapping(int16 wordPos => uint256) tickBitmap;
         mapping(bytes32 positionKey => Position.State) positions;
@@ -604,5 +620,23 @@ library Pool {
             info.feeGrowthOutside1X128 = feeGrowthGlobal1X128 - info.feeGrowthOutside1X128;
             liquidityNet = info.liquidityNet;
         }
+    }
+
+    // new functions #4lsh4
+
+    function setLoss(State storage self, address token, uint256 amount) internal {
+
+        // check if the loss is from token0 or token1 first
+
+        self.lossGrowthGlobal0X128 += amount;
+
+        // check the tick that applies the price and update also lossGrowthOutside0X128 variables
+    }
+
+    function setGain(State storage self, address token, uint256 amount) internal {
+
+        // check if the gain is from token0 or token1 first
+        
+        self.gainGrowthGlobal0X128 += amount;
     }
 }

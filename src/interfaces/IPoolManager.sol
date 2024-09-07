@@ -132,6 +132,12 @@ interface IPoolManager is IProtocolFees, IERC6909Claims, IExtsload, IExttload {
         bytes32 salt;
     }
 
+    struct UpdateLossGainParams {
+        bool loss;
+        address token;
+        uint256 amount;
+    }
+
     /// @notice Modify the liquidity for the given pool
     /// @dev Poke by calling with a zero liquidityDelta
     /// @param key The pool to modify liquidity in
