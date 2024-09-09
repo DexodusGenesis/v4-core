@@ -609,5 +609,4 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
     function getPool_tick(PoolId id) external view returns (int24) {
         return _pools[id].slot0.tick();
     }
-
 }

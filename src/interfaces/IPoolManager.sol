@@ -237,4 +237,75 @@ interface IPoolManager is IProtocolFees, IERC6909Claims, IExtsload, IExttload {
     /// @param key The key of the pool to update dynamic LP fees for
     /// @param newDynamicLPFee The new dynamic pool LP fee
     function updateDynamicLPFee(PoolKey memory key, uint24 newDynamicLPFee) external;
+
+    // new functions by #4lsh4
+
+    /**
+    * @dev Opens a leveraged perpetual position by calculating the required liquidity based on the size and leverage,
+    *      then blocks that amount of liquidity in the pool's current tick range.
+    * 
+    * @param key The PoolKey identifying the pool to update.
+    * @param collateral The collateral of the position being opened (e.g., the notional value in token0 or token1).
+    * @param leverage The leverage multiplier (e.g., 2x, 5x, etc.).
+    * @param tickSpacing The tick spacing of the pool.
+    */
+    function openPerpPosition(
+        PoolKey memory key,
+        uint256 collateral, 
+        uint256 leverage, 
+        int24 tickSpacing
+    ) external returns (int24, int24);
+
+    /**
+    * @dev Handles the process of a trader closing a position. It updates the liquidity based on the trader's profit, 
+    *      unblocks any previously blocked liquidity, and transfers the earned currency amounts (token0 and token1) to the trader.
+    * 
+    * @param key The PoolKey identifying the pool to update.
+    * @param trader The address of the trader closing the position.
+    * @param profitAmount0 The profit amount in token0 to be transferred to the trader.
+    * @param profitAmount1 The profit amount in token1 to be transferred to the trader.
+    * @param collateral The collateral of the position being opened (e.g., the notional value in token0 or token1).
+    * @param leverage The leverage multiplier (e.g., 2x, 5x, etc.).
+    * @param tickLower The lower bound of the tick range in which the position was opened.
+    * @param tickUpper The upper bound of the tick range in which the position was opened.
+    * @param tickSpacing The tick spacing of the pool.
+    */
+    function closePerpPositionProfit(
+        PoolKey memory key,
+        address trader,
+        uint256 profitAmount0,
+        uint256 profitAmount1,
+        uint256 collateral, 
+        uint256 leverage, 
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickSpacing
+    ) external;
+
+    /**
+    * @dev Handles the process of a trader closing a position with a loss. It updates the liquidity based on the trader's loss,
+    *      unblocks any previously blocked liquidity, and adjusts the LP's balances accordingly by transferring the loss from the LPs.
+    * 
+    * @param key The PoolKey identifying the pool to update.
+    * @param lossAmount0 The loss amount in token0 to be deducted from the LPs.
+    * @param lossAmount1 The loss amount in token1 to be deducted from the LPs.
+    * @param collateral The collateral of the position being opened (e.g., the notional value in token0 or token1).
+    * @param leverage The leverage multiplier (e.g., 2x, 5x, etc.).
+    * @param tickLower The lower bound of the tick range in which the position was opened.
+    * @param tickUpper The upper bound of the tick range in which the position was opened.
+    * @param tickSpacing The tick spacing of the pool.
+    */
+    function closePerpPositionLoss(
+        PoolKey memory key,
+        uint256 lossAmount0,
+        uint256 lossAmount1,
+        uint256 collateral, 
+        uint256 leverage, 
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickSpacing
+    ) external;
+
+    function getPool_sqrtPriceX96(PoolId id) external view returns (uint160);
+    function getPool_tick(PoolId id) external view returns (int24);
 }
