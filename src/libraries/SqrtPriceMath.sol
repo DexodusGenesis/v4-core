@@ -286,4 +286,46 @@ library SqrtPriceMath {
                 : -getAmount1Delta(sqrtPriceAX96, sqrtPriceBX96, uint128(liquidity), true).toInt256();
         }
     }
+
+    // new functions by #4lsh4
+
+    /// @notice Calculates the required liquidity for a given amount of token0 within a price range
+    /// @dev This function calculates liquidity using the formula:
+    ///      liquidity = (amount0 * sqrt(upperPrice) * sqrt(lowerPrice)) / (sqrt(upperPrice) - sqrt(lowerPrice))
+    /// @param sqrtPriceLower The square root of the lower price boundary (Q96.96 format)
+    /// @param sqrtPriceUpper The square root of the upper price boundary (Q96.96 format)
+    /// @param amount0 The amount of token0 to calculate liquidity for
+    /// @return liquidity The calculated liquidity
+    function getLiquidityForAmount0(
+        uint160 sqrtPriceLower, 
+        uint160 sqrtPriceUpper, 
+        uint256 amount0
+    ) internal pure returns (uint128 liquidity) {
+        require(sqrtPriceLower > 0 && sqrtPriceUpper > sqrtPriceLower, "Invalid price range");
+
+        uint256 sqrtPriceDifference = sqrtPriceUpper - sqrtPriceLower;
+        uint256 numerator = FullMath.mulDiv(amount0, sqrtPriceUpper, FixedPoint96.Q96);
+        numerator = FullMath.mulDiv(numerator, sqrtPriceLower, FixedPoint96.Q96);
+
+        liquidity = uint128(FullMath.mulDiv(numerator, FixedPoint96.Q96, sqrtPriceDifference));
+    }
+
+    /// @notice Calculates the required liquidity for a given amount of token1 within a price range
+    /// @dev This function calculates liquidity using the formula:
+    ///      liquidity = amount1 / (sqrt(upperPrice) - sqrt(lowerPrice))
+    /// @param sqrtPriceLower The square root of the lower price boundary (Q96.96 format)
+    /// @param sqrtPriceUpper The square root of the upper price boundary (Q96.96 format)
+    /// @param amount1 The amount of token1 to calculate liquidity for
+    /// @return liquidity The calculated liquidity
+    function getLiquidityForAmount1(
+        uint160 sqrtPriceLower, 
+        uint160 sqrtPriceUpper, 
+        uint256 amount1
+    ) internal pure returns (uint128 liquidity) {
+        require(sqrtPriceLower > 0 && sqrtPriceUpper > sqrtPriceLower, "Invalid price range");
+
+        uint256 sqrtPriceDifference = sqrtPriceUpper - sqrtPriceLower;
+        
+        liquidity = uint128(FullMath.mulDiv(amount1, FixedPoint96.Q96, sqrtPriceDifference));
+    }
 }

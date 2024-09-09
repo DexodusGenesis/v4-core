@@ -22,10 +22,10 @@ library Position {
         // fee growth per unit of liquidity as of the last update to liquidity or fees owed
         uint256 feeGrowthInside0LastX128;
         uint256 feeGrowthInside1LastX128;
-
+        // loss growth per unit of liquidity as of the last update to liquidity (perp trader loss, profit for the LP)
         uint256 lossGrowthInside0LastX128;
         uint256 lossGrowthInside1LastX128;
-
+        // gain growth per unit of liquidity as of the last update to liquidity (perp trader profits, loss for the LP)
         uint256 gainGrowthInside0LastX128;
         uint256 gainGrowthInside1LastX128;
     }
@@ -106,4 +106,59 @@ library Position {
         self.feeGrowthInside0LastX128 = feeGrowthInside0X128;
         self.feeGrowthInside1LastX128 = feeGrowthInside1X128;
     }
+
+    /**
+    * @dev Updates the loss and gain growth variables for a position.
+    *      This function calculates the accumulated losses (profit for LPs) and gains (loss for LPs)
+    *      based on the difference between the global loss/gain growth and the position's last recorded values.
+    * @param self The position state to update.
+    * @param lossGrowthInside0X128 The all-time loss growth in token0, per unit of liquidity, inside the position's tick boundaries.
+    * @param lossGrowthInside1X128 The all-time loss growth in token1, per unit of liquidity, inside the position's tick boundaries.
+    * @param gainGrowthInside0X128 The all-time gain growth in token0, per unit of liquidity, inside the position's tick boundaries.
+    * @param gainGrowthInside1X128 The all-time gain growth in token1, per unit of liquidity, inside the position's tick boundaries.
+    */
+    function updateLossAndGainGrowth(
+        State storage self,
+        uint256 lossGrowthInside0X128,
+        uint256 lossGrowthInside1X128,
+        uint256 gainGrowthInside0X128,
+        uint256 gainGrowthInside1X128
+    ) internal returns (uint256 lossOwed0, uint256 lossOwed1, uint256 gainOwed0, uint256 gainOwed1) {
+        uint128 liquidity = self.liquidity;
+
+        // Ensure the position has liquidity to be updated
+        if (liquidity == 0) revert CannotUpdateEmptyPosition();
+
+        // Calculate accumulated losses and gains. Overflow in the subtraction of loss/gain growth is expected
+        unchecked {
+            lossOwed0 = FullMath.mulDiv(
+                lossGrowthInside0X128 - self.lossGrowthInside0LastX128, 
+                liquidity, 
+                FixedPoint128.Q128
+            );
+            lossOwed1 = FullMath.mulDiv(
+                lossGrowthInside1X128 - self.lossGrowthInside1LastX128, 
+                liquidity, 
+                FixedPoint128.Q128
+            );
+
+            gainOwed0 = FullMath.mulDiv(
+                gainGrowthInside0X128 - self.gainGrowthInside0LastX128, 
+                liquidity, 
+                FixedPoint128.Q128
+            );
+            gainOwed1 = FullMath.mulDiv(
+                gainGrowthInside1X128 - self.gainGrowthInside1LastX128, 
+                liquidity, 
+                FixedPoint128.Q128
+            );
+        }
+
+        // Update the position with the latest loss and gain growth values
+        self.lossGrowthInside0LastX128 = lossGrowthInside0X128;
+        self.lossGrowthInside1LastX128 = lossGrowthInside1X128;
+        self.gainGrowthInside0LastX128 = gainGrowthInside0X128;
+        self.gainGrowthInside1LastX128 = gainGrowthInside1X128;
+    }
+
 }

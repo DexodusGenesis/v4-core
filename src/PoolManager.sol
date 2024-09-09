@@ -157,7 +157,8 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
             key.hooks.beforeModifyLiquidity(key, params, hookData);
 
             BalanceDelta principalDelta;
-            (principalDelta, feesAccrued) = pool.modifyLiquidity(
+            BalanceDelta lossGainDelta;
+            (principalDelta, feesAccrued, lossGainDelta) = pool.modifyLiquidity(
                 Pool.ModifyLiquidityParams({
                     owner: msg.sender,
                     tickLower: params.tickLower,
@@ -168,8 +169,8 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
                 })
             );
 
-            // fee delta and principal delta are both accrued to the caller
-            callerDelta = principalDelta + feesAccrued;
+            // fee delta and principal delta are both accrued to the caller, also loss and gain deltas
+            callerDelta = principalDelta + feesAccrued + lossGainDelta;
         }
 
         // event is emitted before the afterModifyLiquidity call to ensure events are always emitted in order
@@ -393,28 +394,219 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
         return Lock.isUnlocked();
     }
 
-    // new functions #4lsh4
+    // new functions by #4lsh4
 
-    function updateLossGain(PoolKey memory key,
-        IPoolManager.UpdateLossGainParams memory params) external returns (uint256) {
-        
+    /**
+    * @dev Opens a leveraged perpetual position by calculating the required liquidity based on the size and leverage,
+    *      then blocks that amount of liquidity in the pool's current tick range.
+    * 
+    * @param key The PoolKey identifying the pool to update.
+    * @param collateral The collateral of the position being opened (e.g., the notional value in token0 or token1).
+    * @param leverage The leverage multiplier (e.g., 2x, 5x, etc.).
+    * @param tickSpacing The tick spacing of the pool.
+    */
+    function openPerpPosition(
+        PoolKey memory key,
+        uint256 collateral, 
+        uint256 leverage, 
+        int24 tickSpacing
+    ) external /*onlyFutures*/ returns (int24, int24) {
+        require(collateral > 0, "Collateral must be greater than zero");
+        require(leverage > 0, "Leverage must be greater than zero");
+
+        // Convert the PoolKey to the PoolId
         PoolId id = key.toId();
+
+        // Access the pool's state using the pool library
         Pool.State storage pool = _getPool(id);
 
-        if (params.loss) {
-            pool.setLoss(params.token, params.amount);
-        } else {
-            pool.setGain(params.token, params.amount);
-        }
+        // Calculate the total position size, which is collateral * leverage
+        uint256 totalPositionSize = collateral * leverage;
 
-        return params.amount;
+        // Calculate the liquidity delta based on the position size
+        (uint128 liquidityDelta, int24 tickLower, int24 tickUpper) = pool.calculateLiquidityDelta(totalPositionSize, tickSpacing);
+
+        // Block the liquidity required to open the leveraged position
+        pool.blockLiquidity(int128(liquidityDelta), tickSpacing);
+
+        return (tickLower, tickUpper);
     }
 
-    function getPool_sqrtPriceX96(PoolId id) public view returns (uint160) {
+    /**
+    * @dev Handles the process of a trader closing a position. It updates the liquidity based on the trader's profit, 
+    *      unblocks any previously blocked liquidity, and transfers the earned currency amounts (token0 and token1) to the trader.
+    * 
+    * @param key The PoolKey identifying the pool to update.
+    * @param trader The address of the trader closing the position.
+    * @param profitAmount0 The profit amount in token0 to be transferred to the trader.
+    * @param profitAmount1 The profit amount in token1 to be transferred to the trader.
+    * @param collateral The collateral of the position being opened (e.g., the notional value in token0 or token1).
+    * @param leverage The leverage multiplier (e.g., 2x, 5x, etc.).
+    * @param tickLower The lower bound of the tick range in which the position was opened.
+    * @param tickUpper The upper bound of the tick range in which the position was opened.
+    * @param tickSpacing The tick spacing of the pool.
+    */
+    function closePerpPositionProfit(
+        PoolKey memory key,
+        address trader,
+        uint256 profitAmount0,
+        uint256 profitAmount1,
+        uint256 collateral, 
+        uint256 leverage, 
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickSpacing
+    ) external /*onlyFutures*/ {
+
+        // Convert the PoolKey to the PoolId
+        PoolId id = key.toId();
+
+        // Access the pool's state using the pool library
+        Pool.State storage pool = _getPool(id);
+
+        // Update gain growth for the LPs based on the trader's profits
+        updateGainGrowthOnProfit(key, profitAmount0, profitAmount1, tickLower, tickUpper);
+
+        // Update liquidity based on the trader's profit
+        pool.updateFromTraderProfit(profitAmount0, profitAmount1, tickLower, tickUpper);
+
+        // Calculate the total position size, which is collateral * leverage
+        uint256 totalPositionSize = collateral * leverage;
+
+        // Calculate the liquidity delta based on the position size
+        (uint128 liquidityDelta,,) = pool.calculateLiquidityDelta(totalPositionSize, tickSpacing);
+
+        // Unblock liquidity that was blocked when the position was opened
+        pool.unblockLiquidity(-int128(liquidityDelta), tickLower, tickUpper);
+
+        // Transfer the profit amounts (in token0 and token1) to the trader's address
+        transferTokens(key, trader, profitAmount0, profitAmount1);
+    }
+
+    /**
+    * @dev Transfers token0 and token1 profits to the trader.
+    * @param key The PoolKey identifying the pool to update.
+    * @param trader The address of the trader receiving the tokens.
+    * @param amount0 The amount of token0 to transfer.
+    * @param amount1 The amount of token1 to transfer.
+    */
+    function transferTokens(PoolKey memory key, address trader, uint256 amount0, uint256 amount1) internal {
+        key.currency0.transfer(trader, amount0);
+        key.currency1.transfer(trader, amount1);
+    }
+
+    /**
+    * @dev Handles the process of a trader closing a position with a loss. It updates the liquidity based on the trader's loss,
+    *      unblocks any previously blocked liquidity, and adjusts the LP's balances accordingly by transferring the loss from the LPs.
+    * 
+    * @param key The PoolKey identifying the pool to update.
+    * @param lossAmount0 The loss amount in token0 to be deducted from the LPs.
+    * @param lossAmount1 The loss amount in token1 to be deducted from the LPs.
+    * @param collateral The collateral of the position being opened (e.g., the notional value in token0 or token1).
+    * @param leverage The leverage multiplier (e.g., 2x, 5x, etc.).
+    * @param tickLower The lower bound of the tick range in which the position was opened.
+    * @param tickUpper The upper bound of the tick range in which the position was opened.
+    * @param tickSpacing The tick spacing of the pool.
+    */
+    function closePerpPositionLoss(
+        PoolKey memory key,
+        uint256 lossAmount0,
+        uint256 lossAmount1,
+        uint256 collateral, 
+        uint256 leverage, 
+        int24 tickLower,
+        int24 tickUpper,
+        int24 tickSpacing
+    ) external /*onlyFutures*/ {
+
+        // Convert the PoolKey to the PoolId
+        PoolId id = key.toId();
+
+        // Access the pool's state using the pool library
+        Pool.State storage pool = _getPool(id);
+
+        // Update loss growth for the LPs based on the trader's loss
+        updateLossGrowthOnLiquidationOrLoss(key, lossAmount0, lossAmount1, tickLower, tickUpper);
+
+        // Calculate the total position size, which is collateral * leverage
+        uint256 totalPositionSize = collateral * leverage;
+
+        // Calculate the liquidity delta based on the position size
+        (uint128 liquidityDelta,,) = pool.calculateLiquidityDelta(totalPositionSize, tickSpacing);
+
+        // Unblock liquidity that was blocked when the position was opened
+        pool.unblockLiquidity(-int128(liquidityDelta), tickLower, tickUpper);
+
+        // tokens from loss will be send from futures contract to manager
+    }
+
+    /**
+    * @notice Updates the loss growth when a perpetual trader is liquidated or position closed with loss.
+    *         This ensures LPs receive the proportional share of the trader's loss as profit.
+    * @dev This function updates both the global and per-tick loss growth variables for the pool,
+    *      ensuring LPs are fairly compensated for the trader's liquidation.
+    * @param key The PoolKey identifying the pool to update.
+    * @param lossAmount0 The amount of token0 loss to be distributed (profit for LPs).
+    * @param lossAmount1 The amount of token1 loss to be distributed (profit for LPs).
+    * @param tickLower The lower tick of the trader's position range.
+    * @param tickUpper The upper tick of the trader's position range.
+    */
+    function updateLossGrowthOnLiquidationOrLoss(
+        PoolKey memory key,
+        uint256 lossAmount0,
+        uint256 lossAmount1,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal {
+        // Convert the PoolKey to the PoolId
+        PoolId id = key.toId();
+
+        // Access the pool's state using the pool library
+        Pool.State storage pool = _getPool(id);
+
+        // Check if the pool is initialized
+        pool.checkPoolInitialized();
+
+        // Call the internal function to update loss growth
+        pool.updateLossGrowthOnLiquidationOrLoss(lossAmount0, lossAmount1, tickLower, tickUpper);
+    }
+
+    /**
+    * @notice Updates the gain growth when a perpetual trader closes a position with profit. This ensures LPs
+    *         incur the proportional share of the trader's gain (equivalent to LP's loss).
+    * @dev This function updates both the global and per-tick gain growth variables for the pool,
+    *      ensuring LPs are fairly impacted by the trader's profit.
+    * @param key The PoolKey identifying the pool to update.
+    * @param gainAmount0 The amount of token0 profit (loss for LPs) to be distributed.
+    * @param gainAmount1 The amount of token1 profit (loss for LPs) to be distributed.
+    * @param tickLower The lower tick of the trader's position range.
+    * @param tickUpper The upper tick of the trader's position range.
+    */
+    function updateGainGrowthOnProfit(
+        PoolKey memory key,
+        uint256 gainAmount0,
+        uint256 gainAmount1,
+        int24 tickLower,
+        int24 tickUpper
+    ) internal {
+        // Convert the PoolKey to the PoolId
+        PoolId id = key.toId();
+
+        // Access the pool's state using the pool library
+        Pool.State storage pool = _getPool(id);
+
+        // Check if the pool is initialized
+        pool.checkPoolInitialized();
+
+        // Call the internal function to update gain growth
+        pool.updateGainGrowthOnProfit(gainAmount0, gainAmount1, tickLower, tickUpper);
+    }
+
+    function getPool_sqrtPriceX96(PoolId id) external view returns (uint160) {
         return _pools[id].slot0.sqrtPriceX96();
     }
     
-    function getPool_tick(PoolId id) public view returns (int24) {
+    function getPool_tick(PoolId id) external view returns (int24) {
         return _pools[id].slot0.tick();
     }
 
