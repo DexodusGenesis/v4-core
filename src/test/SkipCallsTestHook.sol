@@ -144,7 +144,7 @@ contract SkipCallsTestHook is BaseTestHooks, Test {
     }
 
     function _swap(PoolKey calldata key, IPoolManager.SwapParams memory params, bytes calldata hookData) public {
-        IPoolManager(manager).swap(key, params, hookData);
+        IPoolManager(manager).swap(address(0), key, params, hookData);
         address payer = abi.decode(hookData, (address));
         int256 delta0 = IPoolManager(manager).currencyDelta(address(this), key.currency0);
         assertEq(delta0, params.amountSpecified);

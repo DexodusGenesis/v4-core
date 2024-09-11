@@ -166,7 +166,7 @@ interface IPoolManager is IProtocolFees, IERC6909Claims, IExtsload, IExttload {
     /// @dev Swapping on low liquidity pools may cause unexpected swap amounts when liquidity available is less than amountSpecified.
     /// Additionally note that if interacting with hooks that have the BEFORE_SWAP_RETURNS_DELTA_FLAG or AFTER_SWAP_RETURNS_DELTA_FLAG
     /// the hook may alter the swap input/output. Integrators should perform checks on the returned swapDelta.
-    function swap(PoolKey memory key, SwapParams memory params, bytes calldata hookData)
+    function swap(address sender, PoolKey memory key, SwapParams memory params, bytes calldata hookData)
         external
         returns (BalanceDelta swapDelta);
 

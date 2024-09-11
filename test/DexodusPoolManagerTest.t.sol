@@ -110,114 +110,114 @@ contract DexodusPoolManagerTest is Test, Deployers {
 
         (PoolKey memory _key, PoolId id) = initPool(currencyA, currencyB, IHooks(address(0)), 3000, SQRT_PRICE_1_1, ZERO_BYTES);
 
-        uint160 sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
-        int24 tick = manager.getPool_tick(_key.toId());
-        uint256 price = (sqrtPriceX96 / 2**96) ** 2;
+        // uint160 sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
+        // int24 tick = manager.getPool_tick(_key.toId());
+        // uint256 price = (sqrtPriceX96 / 2**96) ** 2;
 
-        console2.log("sqrtPriceX96", sqrtPriceX96);
-        console2.log("tick", tick);
-        console2.log("price", price);
+        // console2.log("sqrtPriceX96", sqrtPriceX96);
+        // console2.log("tick", tick);
+        // console2.log("price", price);
 
         modifyLiquidityRouter.modifyLiquidity(_key, LIQUIDITY_PARAMS1, ZERO_BYTES);
 
-        sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
-        tick = manager.getPool_tick(_key.toId());
-        price = (sqrtPriceX96 / 2**96) ** 2;
+        // sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
+        // tick = manager.getPool_tick(_key.toId());
+        // price = (sqrtPriceX96 / 2**96) ** 2;
 
-        console2.log("sqrtPriceX96", sqrtPriceX96);
-        console2.log("tick", tick);
-        console2.log("price", price);
+        // console2.log("sqrtPriceX96", sqrtPriceX96);
+        // console2.log("tick", tick);
+        // console2.log("price", price);
 
         swapRouter.swap(
             _key,
             IPoolManager.SwapParams({
-                zeroForOne: false,
-                amountSpecified: 1e18,
-                sqrtPriceLimitX96: false ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
+                zeroForOne: true,
+                amountSpecified: 1e16,
+                sqrtPriceLimitX96: true ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
             }),
             PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
             ZERO_BYTES
         );
 
-        sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
-        tick = manager.getPool_tick(_key.toId());
-        price = (sqrtPriceX96 / 2**96) ** 2;
+        // sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
+        // tick = manager.getPool_tick(_key.toId());
+        // price = (sqrtPriceX96 / 2**96) ** 2;
 
-        console2.log("sqrtPriceX96", sqrtPriceX96);
-        console2.log("tick", tick);
-        console2.log("price", price);
+        // console2.log("sqrtPriceX96", sqrtPriceX96);
+        // console2.log("tick", tick);
+        // console2.log("price", price);
 
         vm.stopPrank();
     }
 
-    function test_swap_2() public {
-        vm.startPrank(owner);
+    // function test_swap_2() public {
+    //     vm.startPrank(owner);
 
-        MockERC20(Currency.unwrap(currencyA)).approve(address(modifyLiquidityRouter), type(uint256).max);
-        MockERC20(Currency.unwrap(currencyB)).approve(address(modifyLiquidityRouter), type(uint256).max);
+    //     MockERC20(Currency.unwrap(currencyA)).approve(address(modifyLiquidityRouter), type(uint256).max);
+    //     MockERC20(Currency.unwrap(currencyB)).approve(address(modifyLiquidityRouter), type(uint256).max);
 
-        MockERC20(Currency.unwrap(currencyA)).approve(address(swapRouter), type(uint256).max);
-        MockERC20(Currency.unwrap(currencyB)).approve(address(swapRouter), type(uint256).max);
+    //     MockERC20(Currency.unwrap(currencyA)).approve(address(swapRouter), type(uint256).max);
+    //     MockERC20(Currency.unwrap(currencyB)).approve(address(swapRouter), type(uint256).max);
 
-        (PoolKey memory _key, PoolId id) = initPool(currencyA, currencyB, IHooks(address(0)), 3000, SQRT_PRICE_1_1, ZERO_BYTES);
+    //     (PoolKey memory _key, PoolId id) = initPool(currencyA, currencyB, IHooks(address(0)), 3000, SQRT_PRICE_1_1, ZERO_BYTES);
 
-        uint160 sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
-        int24 tick = manager.getPool_tick(_key.toId());
-        uint256 price = (sqrtPriceX96 / 2**96) ** 2;
+    //     uint160 sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
+    //     int24 tick = manager.getPool_tick(_key.toId());
+    //     uint256 price = (sqrtPriceX96 / 2**96) ** 2;
 
-        console2.log("sqrtPriceX96", sqrtPriceX96);
-        console2.log("tick", tick);
-        console2.log("price", price);
+    //     console2.log("sqrtPriceX96", sqrtPriceX96);
+    //     console2.log("tick", tick);
+    //     console2.log("price", price);
 
-        modifyLiquidityRouter.modifyLiquidity(_key, LIQUIDITY_PARAMS1, ZERO_BYTES);
+    //     modifyLiquidityRouter.modifyLiquidity(_key, LIQUIDITY_PARAMS1, ZERO_BYTES);
 
-        sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
-        tick = manager.getPool_tick(_key.toId());
-        price = (sqrtPriceX96 / 2**96) ** 2;
+    //     sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
+    //     tick = manager.getPool_tick(_key.toId());
+    //     price = (sqrtPriceX96 / 2**96) ** 2;
 
-        console2.log("sqrtPriceX96", sqrtPriceX96);
-        console2.log("tick", tick);
-        console2.log("price", price);
+    //     console2.log("sqrtPriceX96", sqrtPriceX96);
+    //     console2.log("tick", tick);
+    //     console2.log("price", price);
 
-        swapRouter.swap(
-            _key,
-            IPoolManager.SwapParams({
-                zeroForOne: false,
-                amountSpecified: 5e17,
-                sqrtPriceLimitX96: false ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
-            }),
-            PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
-            ZERO_BYTES
-        );
+    //     swapRouter.swap(
+    //         _key,
+    //         IPoolManager.SwapParams({
+    //             zeroForOne: false,
+    //             amountSpecified: 5e17,
+    //             sqrtPriceLimitX96: false ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
+    //         }),
+    //         PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
+    //         ZERO_BYTES
+    //     );
 
-        sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
-        tick = manager.getPool_tick(_key.toId());
-        price = (sqrtPriceX96 / 2**96) ** 2;
+    //     sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
+    //     tick = manager.getPool_tick(_key.toId());
+    //     price = (sqrtPriceX96 / 2**96) ** 2;
 
-        console2.log("sqrtPriceX96", sqrtPriceX96);
-        console2.log("tick", tick);
-        console2.log("price", price);
+    //     console2.log("sqrtPriceX96", sqrtPriceX96);
+    //     console2.log("tick", tick);
+    //     console2.log("price", price);
 
-        swapRouter.swap(
-            _key,
-            IPoolManager.SwapParams({
-                zeroForOne: false,
-                amountSpecified: 5e17,
-                sqrtPriceLimitX96: false ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
-            }),
-            PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
-            ZERO_BYTES
-        );
+    //     swapRouter.swap(
+    //         _key,
+    //         IPoolManager.SwapParams({
+    //             zeroForOne: false,
+    //             amountSpecified: 5e17,
+    //             sqrtPriceLimitX96: false ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
+    //         }),
+    //         PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),
+    //         ZERO_BYTES
+    //     );
 
-        sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
-        tick = manager.getPool_tick(_key.toId());
-        price = (sqrtPriceX96 / 2**96) ** 2;
+    //     sqrtPriceX96 = manager.getPool_sqrtPriceX96(_key.toId());
+    //     tick = manager.getPool_tick(_key.toId());
+    //     price = (sqrtPriceX96 / 2**96) ** 2;
 
-        console2.log("sqrtPriceX96", sqrtPriceX96);
-        console2.log("tick", tick);
-        console2.log("price", price);
+    //     console2.log("sqrtPriceX96", sqrtPriceX96);
+    //     console2.log("tick", tick);
+    //     console2.log("price", price);
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 
 }

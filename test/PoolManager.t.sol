@@ -496,7 +496,7 @@ contract PoolManagerTest is Test, Deployers, GasSnapshot {
 
     function test_swap_failsIfLocked() public {
         vm.expectRevert(IPoolManager.ManagerLocked.selector);
-        manager.swap(key, SWAP_PARAMS, ZERO_BYTES);
+        manager.swap(address(0), key, SWAP_PARAMS, ZERO_BYTES);
     }
 
     function test_swap_succeedsWithNativeTokensIfInitialized() public {

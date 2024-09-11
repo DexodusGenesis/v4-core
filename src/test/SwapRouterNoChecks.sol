@@ -33,7 +33,7 @@ contract SwapRouterNoChecks is PoolTestBase {
 
         CallbackData memory data = abi.decode(rawData, (CallbackData));
 
-        BalanceDelta delta = manager.swap(data.key, data.params, new bytes(0));
+        BalanceDelta delta = manager.swap(address(0), data.key, data.params, new bytes(0));
 
         if (data.params.zeroForOne) {
             data.key.currency0.settle(manager, data.sender, uint256(int256(-delta.amount0())), false);

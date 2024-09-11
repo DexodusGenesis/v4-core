@@ -114,14 +114,14 @@ contract ProxyPoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909
     }
 
     /// @inheritdoc IPoolManager
-    function swap(PoolKey memory key, IPoolManager.SwapParams memory params, bytes calldata hookData)
+    function swap(address sender, PoolKey memory key, IPoolManager.SwapParams memory params, bytes calldata hookData)
         external
         onlyWhenUnlocked
         noDelegateCall
         returns (BalanceDelta swapDelta)
     {
         bytes memory result =
-            _delegateCall(_delegateManager, abi.encodeWithSelector(this.swap.selector, key, params, hookData));
+            _delegateCall(_delegateManager, abi.encodeWithSelector(this.swap.selector, address(0), key, params, hookData));
 
         return abi.decode(result, (BalanceDelta));
     }

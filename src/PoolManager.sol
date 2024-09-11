@@ -187,7 +187,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
     }
 
     /// @inheritdoc IPoolManager
-    function swap(PoolKey memory key, IPoolManager.SwapParams memory params, bytes calldata hookData)
+    function swap(address sender, PoolKey memory key, IPoolManager.SwapParams memory params, bytes calldata hookData)
         external
         onlyWhenUnlocked
         noDelegateCall
@@ -207,6 +207,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
             // execute swap, account protocol fees, and emit swap event
             // _swap is needed to avoid stack too deep error
             swapDelta = _swap(
+                sender,
                 pool,
                 id,
                 Pool.SwapParams({
@@ -226,11 +227,11 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
         // if the hook doesnt have the flag to be able to return deltas, hookDelta will always be 0
         if (hookDelta != BalanceDeltaLibrary.ZERO_DELTA) _accountPoolBalanceDelta(key, hookDelta, address(key.hooks));
 
-        _accountPoolBalanceDelta(key, swapDelta, msg.sender);
+        _accountPoolBalanceDelta(key, swapDelta, sender);
     }
 
     /// @notice Internal swap function to execute a swap, take protocol fees on input token, and emit the swap event
-    function _swap(Pool.State storage pool, PoolId id, Pool.SwapParams memory params, Currency inputCurrency)
+    function _swap(address sender, Pool.State storage pool, PoolId id, Pool.SwapParams memory params, Currency inputCurrency)
         internal
         returns (BalanceDelta)
     {
@@ -243,7 +244,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
         // event is emitted before the afterSwap call to ensure events are always emitted in order
         emit Swap(
             id,
-            msg.sender,
+            sender,
             delta.amount0(),
             delta.amount1(),
             result.sqrtPriceX96,
@@ -294,7 +295,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
     function take(Currency currency, address to, uint256 amount) external onlyWhenUnlocked {
         unchecked {
             // negation must be safe as amount is not negative
-            _accountDelta(currency, -(amount.toInt128()), msg.sender);
+            _accountDelta(currency, -(amount.toInt128()), to);
             currency.transfer(to, amount);
         }
     }
