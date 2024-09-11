@@ -14,7 +14,7 @@ contract DexodusPoolManagerTest is Test, Deployers {
     using Pool for *;
 
     IPoolManager.ModifyLiquidityParams public LIQUIDITY_PARAMS1 =
-        IPoolManager.ModifyLiquidityParams({tickLower: -120, tickUpper: 120, liquidityDelta: 100e18, salt: 0});
+        IPoolManager.ModifyLiquidityParams({tickLower: -120, tickUpper: 120, liquidityDelta: 1_000_000e18, salt: 0});
     IPoolManager.ModifyLiquidityParams public REMOVE_LIQUIDITY_PARAMS1 =
         IPoolManager.ModifyLiquidityParams({tickLower: -120, tickUpper: 120, liquidityDelta: -1e18, salt: 0});
     
@@ -132,7 +132,7 @@ contract DexodusPoolManagerTest is Test, Deployers {
             _key,
             IPoolManager.SwapParams({
                 zeroForOne: true,
-                amountSpecified: 1e16,
+                amountSpecified: 1e18,
                 sqrtPriceLimitX96: true ? MIN_PRICE_LIMIT : MAX_PRICE_LIMIT
             }),
             PoolSwapTest.TestSettings({takeClaims: false, settleUsingBurn: false}),

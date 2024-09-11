@@ -126,9 +126,6 @@ library Position {
     ) internal returns (uint256 lossOwed0, uint256 lossOwed1, uint256 gainOwed0, uint256 gainOwed1) {
         uint128 liquidity = self.liquidity;
 
-        // Ensure the position has liquidity to be updated
-        if (liquidity == 0) revert CannotUpdateEmptyPosition();
-
         // Calculate accumulated losses and gains. Overflow in the subtraction of loss/gain growth is expected
         unchecked {
             lossOwed0 = FullMath.mulDiv(
