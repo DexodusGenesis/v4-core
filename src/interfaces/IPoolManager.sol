@@ -145,7 +145,7 @@ interface IPoolManager is IProtocolFees, IERC6909Claims, IExtsload, IExttload {
     /// @param hookData The data to pass through to the add/removeLiquidity hooks
     /// @return callerDelta The balance delta of the caller of modifyLiquidity. This is the total of both principal, fee deltas, and hook deltas if applicable
     /// @return feesAccrued The balance delta of the fees generated in the liquidity range. Returned for informational purposes
-    function modifyLiquidity(PoolKey memory key, ModifyLiquidityParams memory params, bytes calldata hookData)
+    function modifyLiquidity(address sender, PoolKey memory key, ModifyLiquidityParams memory params, bytes calldata hookData)
         external
         returns (BalanceDelta callerDelta, BalanceDelta feesAccrued);
 
@@ -308,4 +308,5 @@ interface IPoolManager is IProtocolFees, IERC6909Claims, IExtsload, IExttload {
 
     function getPool_sqrtPriceX96(PoolId id) external view returns (uint160);
     function getPool_tick(PoolId id) external view returns (int24);
+    function getPool_position(PoolId id, address owner, int24 tickLower, int24 tickUpper, bytes32 salt) external view returns (uint128);
 }

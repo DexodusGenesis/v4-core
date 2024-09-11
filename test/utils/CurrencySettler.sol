@@ -30,7 +30,7 @@ library CurrencySettler {
             } else {
                 IERC20Minimal(Currency.unwrap(currency)).transfer(address(manager), amount);
             }
-            manager.settle();
+            manager.settleFor{value: 0}(payer);
         }
     }
 

@@ -149,7 +149,7 @@ contract NestedActionExecutor is Test, PoolTestBase {
         (,, int256 deltaThisBefore0) = _fetchBalances(key.currency0, user, address(this));
         (,, int256 deltaThisBefore1) = _fetchBalances(key.currency1, user, address(this));
 
-        (BalanceDelta delta,) = manager.modifyLiquidity(key, ADD_LIQUIDITY_PARAMS, "");
+        (BalanceDelta delta,) = manager.modifyLiquidity(address(0), key, ADD_LIQUIDITY_PARAMS, "");
 
         (,, int256 deltaCallerAfter0) = _fetchBalances(key.currency0, user, caller);
         (,, int256 deltaCallerAfter1) = _fetchBalances(key.currency1, user, caller);
@@ -174,7 +174,7 @@ contract NestedActionExecutor is Test, PoolTestBase {
         (,, int256 deltaThisBefore0) = _fetchBalances(key.currency0, user, address(this));
         (,, int256 deltaThisBefore1) = _fetchBalances(key.currency1, user, address(this));
 
-        (BalanceDelta delta,) = manager.modifyLiquidity(key, REMOVE_LIQUIDITY_PARAMS, "");
+        (BalanceDelta delta,) = manager.modifyLiquidity(address(0), key, REMOVE_LIQUIDITY_PARAMS, "");
 
         (,, int256 deltaCallerAfter0) = _fetchBalances(key.currency0, user, caller);
         (,, int256 deltaCallerAfter1) = _fetchBalances(key.currency1, user, caller);

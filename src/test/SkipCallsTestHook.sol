@@ -159,7 +159,7 @@ contract SkipCallsTestHook is BaseTestHooks, Test {
         IPoolManager.ModifyLiquidityParams memory params,
         bytes calldata hookData
     ) public {
-        IPoolManager(manager).modifyLiquidity(key, params, hookData);
+        IPoolManager(manager).modifyLiquidity(address(0), key, params, hookData);
         address payer = abi.decode(hookData, (address));
         int256 delta0 = IPoolManager(manager).currencyDelta(address(this), key.currency0);
         int256 delta1 = IPoolManager(manager).currencyDelta(address(this), key.currency1);
@@ -179,9 +179,9 @@ contract SkipCallsTestHook is BaseTestHooks, Test {
         // first hook needs to add liquidity for itself
         IPoolManager.ModifyLiquidityParams memory newParams =
             IPoolManager.ModifyLiquidityParams({tickLower: -120, tickUpper: 120, liquidityDelta: 1e18, salt: 0});
-        IPoolManager(manager).modifyLiquidity(key, newParams, hookData);
+        IPoolManager(manager).modifyLiquidity(address(0), key, newParams, hookData);
         // hook removes liquidity
-        IPoolManager(manager).modifyLiquidity(key, params, hookData);
+        IPoolManager(manager).modifyLiquidity(address(0), key, params, hookData);
         address payer = abi.decode(hookData, (address));
         int256 delta0 = IPoolManager(manager).currencyDelta(address(this), key.currency0);
         int256 delta1 = IPoolManager(manager).currencyDelta(address(this), key.currency1);

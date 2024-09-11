@@ -101,6 +101,7 @@ contract ProxyPoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909
 
     /// @inheritdoc IPoolManager
     function modifyLiquidity(
+        address sender,
         PoolKey memory key,
         IPoolManager.ModifyLiquidityParams memory params,
         bytes calldata hookData
@@ -438,5 +439,13 @@ contract ProxyPoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909
     
     function getPool_tick(PoolId id) external view returns (int24) {
         return _pools[id].slot0.tick();
+    }
+
+    function getPool_position(PoolId id, address owner, int24 tickLower, int24 tickUpper, bytes32 salt) external view returns (uint128) {
+
+        Position.State storage position = _pools[id].positions.get(owner, tickLower, tickUpper, salt);
+
+        return position.liquidity;
+
     }
 }

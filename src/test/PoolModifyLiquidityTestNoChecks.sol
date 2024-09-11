@@ -58,7 +58,7 @@ contract PoolModifyLiquidityTestNoChecks is PoolTestBase {
 
         CallbackData memory data = abi.decode(rawData, (CallbackData));
 
-        (BalanceDelta delta,) = manager.modifyLiquidity(data.key, data.params, data.hookData);
+        (BalanceDelta delta,) = manager.modifyLiquidity(address(0), data.key, data.params, data.hookData);
 
         int256 delta0 = delta.amount0();
         int256 delta1 = delta.amount1();

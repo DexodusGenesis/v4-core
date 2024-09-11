@@ -89,7 +89,7 @@ contract PoolManagerTest is Test, Deployers, GasSnapshot {
 
     function test_addLiquidity_failsIfLocked() public {
         vm.expectRevert(IPoolManager.ManagerLocked.selector);
-        manager.modifyLiquidity(uninitializedKey, LIQUIDITY_PARAMS, ZERO_BYTES);
+        manager.modifyLiquidity(address(0), uninitializedKey, LIQUIDITY_PARAMS, ZERO_BYTES);
     }
 
     function test_removeLiquidity_failsIfNotInitialized() public {
@@ -99,7 +99,7 @@ contract PoolManagerTest is Test, Deployers, GasSnapshot {
 
     function test_removeLiquidity_failsIfLocked() public {
         vm.expectRevert(IPoolManager.ManagerLocked.selector);
-        manager.modifyLiquidity(key, REMOVE_LIQUIDITY_PARAMS, ZERO_BYTES);
+        manager.modifyLiquidity(address(0), key, REMOVE_LIQUIDITY_PARAMS, ZERO_BYTES);
     }
 
     function test_addLiquidity_succeedsIfInitialized(uint160 sqrtPriceX96) public {

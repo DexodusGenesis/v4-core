@@ -60,18 +60,18 @@ contract PoolModifyLiquidityTest is PoolTestBase {
 
         CallbackData memory data = abi.decode(rawData, (CallbackData));
 
-        (uint128 liquidityBefore,,) = manager.getPositionInfo(
-            data.key.toId(), address(this), data.params.tickLower, data.params.tickUpper, data.params.salt
+        uint128 liquidityBefore = manager.getPool_position(
+            data.key.toId(), data.sender, data.params.tickLower, data.params.tickUpper, data.params.salt
         );
 
-        (BalanceDelta delta,) = manager.modifyLiquidity(data.key, data.params, data.hookData);
+        (BalanceDelta delta,) = manager.modifyLiquidity(data.sender, data.key, data.params, data.hookData);
 
-        (uint128 liquidityAfter,,) = manager.getPositionInfo(
-            data.key.toId(), address(this), data.params.tickLower, data.params.tickUpper, data.params.salt
+        uint128 liquidityAfter = manager.getPool_position(
+            data.key.toId(), data.sender, data.params.tickLower, data.params.tickUpper, data.params.salt
         );
 
-        (,, int256 delta0) = _fetchBalances(data.key.currency0, data.sender, address(this));
-        (,, int256 delta1) = _fetchBalances(data.key.currency1, data.sender, address(this));
+        int256 delta0 = delta.amount0();
+        int256 delta1 = delta.amount1();
 
         require(
             int128(liquidityBefore) + data.params.liquidityDelta == int128(liquidityAfter), "liquidity change incorrect"

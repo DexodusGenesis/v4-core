@@ -145,6 +145,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
 
     /// @inheritdoc IPoolManager
     function modifyLiquidity(
+        address sender,
         PoolKey memory key,
         IPoolManager.ModifyLiquidityParams memory params,
         bytes calldata hookData
@@ -160,7 +161,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
             BalanceDelta lossGainDelta;
             (principalDelta, feesAccrued, lossGainDelta) = pool.modifyLiquidity(
                 Pool.ModifyLiquidityParams({
-                    owner: msg.sender,
+                    owner: sender,
                     tickLower: params.tickLower,
                     tickUpper: params.tickUpper,
                     liquidityDelta: params.liquidityDelta.toInt128(),
@@ -174,7 +175,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
         }
 
         // event is emitted before the afterModifyLiquidity call to ensure events are always emitted in order
-        emit ModifyLiquidity(id, msg.sender, params.tickLower, params.tickUpper, params.liquidityDelta, params.salt);
+        emit ModifyLiquidity(id, sender, params.tickLower, params.tickUpper, params.liquidityDelta, params.salt);
 
         BalanceDelta hookDelta;
         (callerDelta, hookDelta) = key.hooks.afterModifyLiquidity(key, params, callerDelta, feesAccrued, hookData);
@@ -182,7 +183,7 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
         // if the hook doesnt have the flag to be able to return deltas, hookDelta will always be 0
         if (hookDelta != BalanceDeltaLibrary.ZERO_DELTA) _accountPoolBalanceDelta(key, hookDelta, address(key.hooks));
 
-        _accountPoolBalanceDelta(key, callerDelta, msg.sender);
+        _accountPoolBalanceDelta(key, callerDelta, sender);
     }
 
     /// @inheritdoc IPoolManager
@@ -608,5 +609,13 @@ contract PoolManager is IPoolManager, ProtocolFees, NoDelegateCall, ERC6909Claim
     
     function getPool_tick(PoolId id) external view returns (int24) {
         return _pools[id].slot0.tick();
+    }
+
+    function getPool_position(PoolId id, address owner, int24 tickLower, int24 tickUpper, bytes32 salt) external view returns (uint128) {
+
+        Position.State storage position = _pools[id].positions.get(owner, tickLower, tickUpper, salt);
+
+        return position.liquidity;
+
     }
 }
